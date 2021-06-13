@@ -16,4 +16,6 @@ export const Colors = {
     /* Default text color */
     darker: "#3a415d",
   },
+  white: "#fff",
+  grey: "#808080"
 }

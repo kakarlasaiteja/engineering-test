@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 import Button from "@material-ui/core/ButtonBase"
+import {
+  CaretUpOutlined,
+  CaretDownOutlined,
+} from '@ant-design/icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import { Colors } from "shared/styles/colors"
@@ -9,10 +13,15 @@ import { Person } from "shared/models/person"
 import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
+import { useRollContext } from "../contexts/roll-context";
+import { useStudentContext, updateStudentSearch, updateFilterRollState, updateDisplayedStudents, updateSortBy, updateSortDirection } from "../contexts/student-context";
+import 'antd/dist/antd.css'
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
+  let { studentDetails, dispatch } = useStudentContext()
+  let { rollDetails } = useRollContext()
 
   useEffect(() => {
     void getStudents()
@@ -24,9 +33,13 @@ export const HomeBoardPage: React.FC = () => {
     }
   }
 
-  const onActiveRollAction = (action: ActiveRollAction) => {
+  const onActiveRollAction = async (action: ActiveRollAction) => {
     if (action === "exit") {
       setIsRollMode(false)
+      await dispatch(updateFilterRollState('all'))
+      dispatch(updateDisplayedStudents({
+        rolls: rollDetails.currentRolls
+      }))
     }
   }
 
@@ -41,9 +54,9 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
 
-        {loadState === "loaded" && data?.students && (
+        {loadState === "loaded" && studentDetails.displayedStudents && (
           <>
-            {data.students.map((s) => (
+            {studentDetails.displayedStudents.map((s: any) => (
               <StudentListTile key={s.id} isRollMode={isRollMode} student={s} />
             ))}
           </>
@@ -66,10 +79,56 @@ interface ToolbarProps {
 }
 const Toolbar: React.FC<ToolbarProps> = (props) => {
   const { onItemClick } = props
+  let { studentDetails, dispatch } = useStudentContext()
+  let { rollDetails } = useRollContext()
+
+  const onSearchStudents = async (event: any) => {
+    await dispatch(updateStudentSearch(event.target.value))
+    dispatch(updateDisplayedStudents({
+      rolls: rollDetails.currentRolls
+    }))
+  }
+
+  const getNextSortDirection = () => {
+    switch (studentDetails.sortDirection) {
+      case "ascending":
+        return "descending";
+      case "descending":
+        return "none";
+      case "none":
+        return "ascending";
+      default:
+        return "none"
+    }
+  }
+
+  const onSortByChange = async (event: any) => {
+    await dispatch(updateSortBy(event.target.value))
+    dispatch(updateDisplayedStudents({
+      rolls: rollDetails.currentRolls
+    }))
+  }
+
+  const onSortClick = async () => {
+    await dispatch(updateSortDirection(getNextSortDirection()))
+    dispatch(updateDisplayedStudents({
+      rolls: rollDetails.currentRolls
+    }))
+  }
+
   return (
     <S.ToolbarContainer>
-      <div onClick={() => onItemClick("sort")}>First Name</div>
-      <div>Search</div>
+      <S.SelectAndSort>
+        <S.Select value={studentDetails.sortBy} onChange={(e) => onSortByChange(e)}>
+          <S.Option value="first_name">First Name</S.Option>
+          <S.Option value="last_name">Last Name</S.Option>
+        </S.Select>
+        <S.SortDiv>
+          <S.SortUp sortdirection={studentDetails.sortDirection} onClick={onSortClick} />
+          <S.SortDown sortdirection={studentDetails.sortDirection} onClick={onSortClick} />
+        </S.SortDiv>
+      </S.SelectAndSort>
+      <S.Input placeholder="Search" value={studentDetails.searchValue} onChange={(e) => onSearchStudents(e)} />
       <S.Button onClick={() => onItemClick("roll")}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
@@ -77,26 +136,78 @@ const Toolbar: React.FC<ToolbarProps> = (props) => {
 
 const S = {
   PageContainer: styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 50%;
-    margin: ${Spacing.u4} auto 140px;
-  `,
+          display: flex;
+          flex-direction: column;
+          width: 50%;
+          margin: ${Spacing.u4} auto 140px;
+          `,
   ToolbarContainer: styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #fff;
-    background-color: ${Colors.blue.base};
-    padding: 6px 14px;
-    font-weight: ${FontWeight.strong};
-    border-radius: ${BorderRadius.default};
-  `,
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #fff;
+          background-color: ${Colors.blue.base};
+          padding: 6px 14px;
+          font-weight: ${FontWeight.strong};
+          border-radius: ${BorderRadius.default};
+          `,
   Button: styled(Button)`
-    && {
-      padding: ${Spacing.u2};
-      font-weight: ${FontWeight.strong};
-      border-radius: ${BorderRadius.default};
+          && {
+            padding: ${Spacing.u2};
+          font-weight: ${FontWeight.strong};
+          border-radius: ${BorderRadius.default};
     }
+          `,
+  Input: styled.input`
+          && {
+            height: 50%;
+          background-color: ${Colors.blue.base};
+          color: #fff;
+          font-weight: ${FontWeight.normal};
+  }
+          ::placeholder {
+            color: #fff;
+          font-weight: ${FontWeight.normal};
+  }
+          `,
+  Select: styled.select`
+          && {
+            height: 50%;
+          background-color: ${Colors.blue.base};
+          color: #fff;
+          font-weight: ${FontWeight.strong};
+  }
+          `,
+  Option: styled.option`
+  && {
+          color: #fff;
+          font-weight: ${FontWeight.mediumStrong};
+  }
+          :hover {
+            background-color: red;
+  }
+          `,
+  SortDiv: styled.div`
+          && {
+                  display: flex;
+                  flex-direction: column;
+                  margin-left: 5px;
+          }
+            `,
+  SelectAndSort: styled.div`
+  && {
+          display: flex;
+          flex-direction: row;
+  }
+    `,
+  SortUp: styled(CaretUpOutlined) <{ sortdirection: string }>`
+  && {
+    color:  ${({ sortdirection }) => (sortdirection === 'ascending' ? Colors.white : Colors.grey)};     
+  }
+    `,
+  SortDown: styled(CaretDownOutlined) <{ sortdirection: string }>`
+ && {
+  color:  ${({ sortdirection }) => (sortdirection === 'descending' ? Colors.white : Colors.grey)};      
+ }
   `,
 }
