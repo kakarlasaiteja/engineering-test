@@ -3,6 +3,8 @@ import styled from "styled-components"
 import Button from "@material-ui/core/Button"
 import { BorderRadius, Spacing } from "shared/styles/styles"
 import { RollStateList } from "staff-app/components/roll-state/roll-state-list.component"
+import { useRollContext } from "../../contexts/roll-context";
+import { StateList } from "../roll-state/roll-state-list.component";
 
 export type ActiveRollAction = "filter" | "exit"
 interface Props {
@@ -12,19 +14,37 @@ interface Props {
 
 export const ActiveRollOverlay: React.FC<Props> = (props) => {
   const { isActive, onItemClick } = props
-
+  let { rollDetails, dispatch } = useRollContext()
+  let stateList: StateList[] = [
+    { type: "all", count: 0 },
+    { type: "present", count: 0 },
+    { type: "late", count: 0 },
+    { type: "absent", count: 0 },
+  ]
+  rollDetails.currentRolls.map((roll: any) => {
+    stateList[0].count++
+    switch (roll.roll_state) {
+      case "present":
+        stateList[1].count++;
+        break;
+      case "late":
+        stateList[2].count++;
+        break;
+      case "absent":
+        stateList[3].count++;
+        break;
+      default:
+        //do nothing
+        break;
+    }
+  })
   return (
     <S.Overlay isActive={isActive}>
       <S.Content>
         <div>Class Attendance</div>
         <div>
           <RollStateList
-            stateList={[
-              { type: "all", count: 0 },
-              { type: "present", count: 0 },
-              { type: "late", count: 0 },
-              { type: "absent", count: 0 },
-            ]}
+            stateList={stateList}
           />
           <div style={{ marginTop: Spacing.u6 }}>
             <Button color="inherit" onClick={() => onItemClick("exit")}>
