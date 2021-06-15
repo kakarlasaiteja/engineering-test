@@ -18,6 +18,7 @@ import "antd/dist/antd.css"
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
+  // eslint-disable-next-line
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
   const [saveRoll] = useApi({ url: "save-roll" })
   let { studentDetails, dispatch } = useStudentContext()
