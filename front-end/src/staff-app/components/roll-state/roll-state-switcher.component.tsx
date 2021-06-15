@@ -1,6 +1,5 @@
 import React, { useState } from "react"
 import { RolllStateType } from "shared/models/roll"
-import { useApi } from "shared/hooks/use-api"
 import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.component"
 import { addNewRoll, updateRolls, useRollContext } from "../../contexts/roll-context"
 

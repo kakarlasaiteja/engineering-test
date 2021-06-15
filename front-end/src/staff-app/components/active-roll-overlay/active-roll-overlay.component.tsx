@@ -21,7 +21,7 @@ export const ActiveRollOverlay: React.FC<Props> = (props) => {
     { type: "late", count: 0 },
     { type: "absent", count: 0 },
   ]
-  rollDetails.currentRolls.map((roll: any) => {
+  rollDetails.currentRolls.forEach((roll: any) => {
     stateList[0].count++
     switch (roll.roll_state) {
       case "present":
@@ -37,7 +37,6 @@ export const ActiveRollOverlay: React.FC<Props> = (props) => {
         //do nothing
         break
     }
-    return ''
   })
   return (
     <S.Overlay isActive={isActive}>
