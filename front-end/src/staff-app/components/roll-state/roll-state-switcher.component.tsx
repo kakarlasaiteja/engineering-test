@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from "react"
+import React, { useState } from "react"
 import { RolllStateType } from "shared/models/roll"
 import { useApi } from "shared/hooks/use-api"
 import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.component"
-import { addNewRoll, updateRolls, useRollContext } from "../../contexts/roll-context";
+import { addNewRoll, updateRolls, useRollContext } from "../../contexts/roll-context"
 
 interface Props {
   initialState?: RolllStateType
@@ -13,18 +13,17 @@ interface Props {
 export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", size = 40, onStateChange, studentId }) => {
   let { rollDetails, dispatch } = useRollContext()
   const getRollState = (studentId: any) => {
-    let rollState: RolllStateType = 'unmark'
-    rollDetails.currentRolls.map((roll:any) => {
-      if(roll.student_id === studentId){
-        rollState = roll.roll_state;
+    let rollState: RolllStateType = "unmark"
+    rollDetails.currentRolls.map((roll: any) => {
+      if (roll.student_id === studentId) {
+        rollState = roll.roll_state
       }
-      return ''
+      return ""
     })
     return rollState
   }
-  
+
   const [rollState, setRollState] = useState<RolllStateType>(getRollState(studentId))
-  const [saveRoll, data, loadState] = useApi({ url: "save-roll" })
 
   const nextState = () => {
     const states: RolllStateType[] = ["present", "late", "absent"]
@@ -36,10 +35,10 @@ export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", si
   const findWithAttr = (array: any[], attr: string | number, value: any) => {
     for (var i = 0; i < array.length; i += 1) {
       if (array[i][attr] === value) {
-        return i;
+        return i
       }
     }
-    return -1;
+    return -1
   }
 
   const onClick = (studentId: number) => {
@@ -50,15 +49,17 @@ export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", si
     }
     let rollObj = {
       student_id: studentId,
-      roll_state: next
+      roll_state: next,
     }
     if (rollDetails.currentRolls && rollDetails.currentRolls.length > 0) {
       let rolls: any[] = rollDetails.currentRolls
       if (findWithAttr(rolls, "student_id", studentId) !== -1) {
-        dispatch(updateRolls({
-          studentId: studentId,
-          state: next
-        }))
+        dispatch(
+          updateRolls({
+            studentId: studentId,
+            state: next,
+          })
+        )
       } else {
         dispatch(addNewRoll(rollObj))
       }

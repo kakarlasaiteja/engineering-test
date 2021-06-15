@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import styled from "styled-components"
 import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import { Colors } from "shared/styles/colors"
@@ -12,12 +12,20 @@ import Paper from '@material-ui/core/Paper';
 import Dialog from '@material-ui/core/Dialog';
 import { get, LocalStorageKey } from "shared/helpers/local-storage";
 import { Activity } from "shared/models/activity";
-import { Roll, StudentRoll } from "shared/models/roll";
+import { Roll } from "shared/models/roll";
 import { Person } from "shared/models/person";
 import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.component";
+import { useApi } from "shared/hooks/use-api";
+import { CenteredContainer } from "shared/components/centered-container/centered-container.component";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export const ActivityPage: React.FC = () => {
-  let activities: Activity[] = get(LocalStorageKey.activities) || []
+  const [getActivities, data, loadState] = useApi<{ activities: Activity[] }>({ url: "get-activities" })
+
+  useEffect(() => {
+    void getActivities()
+  }, [getActivities])
+
   let [open, setOpen] = useState(false)
   let [entity, setEntity] = useState<Roll>({
     id: 0,
@@ -28,7 +36,7 @@ export const ActivityPage: React.FC = () => {
   })
 
   const handleViewClick = (entity: Roll) => {
-    if(!open){
+    if (!open) {
       setEntity(entity)
     }
     setOpen(!open)
@@ -43,29 +51,43 @@ export const ActivityPage: React.FC = () => {
       Activities
     </S.ToolbarContainer>
 
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Type</TableCell>
-            <TableCell>Completed Date/Time</TableCell>
-            <TableCell>Entity</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {activities.map((activity: any) => (
-            <TableRow key={activity.date}>
-              <TableCell>{activity.type}</TableCell>
-              <TableCell>{activity.date}</TableCell>
-              <TableCell>
-                <a onClick={() => handleViewClick(activity.entity)}>view</a>
-              </TableCell>
+    {loadState === "loading" && (
+      <CenteredContainer>
+        <FontAwesomeIcon icon="spinner" size="2x" spin />
+      </CenteredContainer>
+    )}
+
+    {loadState === "loaded" && data?.activities && (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Completed Date/Time</TableCell>
+              <TableCell>Entity</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <RollModalTable open={open} roll={entity!}  onClose={handleClose} />
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.activities.map((activity: any) => (
+              <TableRow key={activity.date}>
+                <TableCell>{activity.type}</TableCell>
+                <TableCell>{activity.date}</TableCell>
+                <TableCell>
+                  <a onClick={() => handleViewClick(activity.entity)}>view</a>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <RollModalTable open={open} roll={entity!} onClose={handleClose} />
+      </TableContainer>
+    )}
+
+    {loadState === "error" && (
+      <CenteredContainer>
+        <div>Failed to load</div>
+      </CenteredContainer>
+    )}
   </S.Container>
 }
 
@@ -91,7 +113,7 @@ const RollModalTable: React.FC<RollModalTableProps> = (props) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth={true} maxWidth = {'md'}>
+      <Dialog open={open} onClose={onClose} fullWidth={true} maxWidth={'md'}>
         <Table>
           <S.StyledTableHead>
             <TableRow>
