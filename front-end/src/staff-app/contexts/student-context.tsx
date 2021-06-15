@@ -20,7 +20,6 @@ export const UPDATE_STUDENT_SEARCH_FIELD = "UPDATE_STUDENT_SEARCH_FIELD"
 export const UPDATE_FILTER_ROLL_STATE = "UPDATE_FILTER_ROLL_STATE";
 export const UPDATE_SORT_BY = "UPDATE_SORT_BY";
 export const UPDATE_SORT_DIRECTION = "UPDATE_SORT_DIRECTION";
-export const SORT_STUDENTS = "SORT_STUDENTS"
 
 // Action creators
 export const addStudents = (payload: any) => {
@@ -45,10 +44,6 @@ export const updateSortBy = (payload: any) => {
 
 export const updateSortDirection = (payload: any) => {
   return { type: UPDATE_SORT_DIRECTION, payload };
-}
-
-export const sortStudents = () => {
-  return { type: SORT_STUDENTS };
 }
 
 const getSortedStudents = (students: any[] | undefined, sortBy: any, sortDirection: any) => {
@@ -122,30 +117,6 @@ export function studentReducer(state: any, action: any) {
         ...state,
         sortDirection: action.payload
       };
-    // case SORT_STUDENTS:
-    //   let students = state.displayedStudents
-    //   let sortBy = state.sortBy
-    //   let sortDirection = state.sortDirection
-    //   return {
-    //     ...state,
-    //     displayedStudents: students.sort((a: any, b: any) => {
-    //       let as = a[sortBy].toLowerCase()
-    //       let bs = b[sortBy].toLowerCase()
-    //       if (sortDirection === 'ascending') {
-    //         if (as < bs)
-    //           return -1;
-    //         if (as > bs)
-    //           return 1
-    //         return 0
-    //       } else if (sortDirection === 'descending') {
-    //         if (as < bs)
-    //           return 1;
-    //         if (as > bs)
-    //           return -1
-    //         return 0
-    //       }
-    //     })
-    //   };
     default:
       return state;
   }

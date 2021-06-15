@@ -10,18 +10,24 @@ import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import { Colors } from "shared/styles/colors"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
 import { Person } from "shared/models/person"
+import { Roll, RollInput } from "shared/models/roll"
 import { useApi } from "shared/hooks/use-api"
+import { LocalStorageKey } from "shared/helpers/local-storage";
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
+import { saveActiveRoll } from "../../api/save-active-roll";
+import { buildActivities } from "../../api/get-activities";
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
-import { useRollContext } from "../contexts/roll-context";
+import { useRollContext, resetRolls } from "../contexts/roll-context";
 import { useStudentContext, updateStudentSearch, updateFilterRollState, updateDisplayedStudents, updateSortBy, updateSortDirection } from "../contexts/student-context";
 import 'antd/dist/antd.css'
+import { get } from "shared/helpers/local-storage";
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
   let { studentDetails, dispatch } = useStudentContext()
   let { rollDetails } = useRollContext()
+  let rollDispatch = useRollContext().dispatch
 
   useEffect(() => {
     void getStudents()
@@ -40,6 +46,16 @@ export const HomeBoardPage: React.FC = () => {
       dispatch(updateDisplayedStudents({
         rolls: rollDetails.currentRolls
       }))
+    } else if (action === "complete") {
+      setIsRollMode(false)
+      if(rollDetails.currentRolls && rollDetails.currentRolls.length > 0){
+        let newRollInput: RollInput = {
+          student_roll_states: rollDetails.currentRolls
+        }
+        await saveActiveRoll(newRollInput)
+        buildActivities()
+        rollDispatch(resetRolls())
+      }
     }
   }
 
@@ -164,10 +180,18 @@ const S = {
           background-color: ${Colors.blue.base};
           color: #fff;
           font-weight: ${FontWeight.normal};
+          border-radius: 5px;
+          width: 50%;
+          border-color: grey;
   }
           ::placeholder {
             color: #fff;
-          font-weight: ${FontWeight.normal};
+          font-weight: ${FontWeight.mediumStrong};
+          text-align: center;
+          opacity: 1;
+  }
+  :focus{
+    border-color: darkgray
   }
           `,
   Select: styled.select`

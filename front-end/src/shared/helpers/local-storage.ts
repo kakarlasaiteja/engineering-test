@@ -21,5 +21,6 @@ export function get<T>(key: LocalStorageKey) {
 export enum LocalStorageKey {
   students = "boardingware.students",
   rolls = "boardingware.rolls",
-  currentRolls = "boardingware.currentRolls"
+  currentRolls = "boardingware.currentRolls",
+  activities = "boardingware.activities"
 }

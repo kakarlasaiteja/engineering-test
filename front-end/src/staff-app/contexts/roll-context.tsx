@@ -1,15 +1,19 @@
 import React, { createContext, useReducer, useContext } from "react";
+import { StudentRoll } from "../../shared/models/roll";
+
+let rolls: StudentRoll[] = []
 
 let Obj: any
 export const RollContext = createContext(Obj)
 
 const initialState = {
-  currentRolls: [],
+  currentRolls: rolls,
 };
 
 // Actions
 export const ADD_NEW_ROLL = "ADD_NEW_ROLL";
 export const UPDATE_ROLLS = "UPDATE_ROLLS";
+export const RESET_ROLLS = "RESET_ROLLS"
 
 // Action creators
 export const  addNewRoll = (payload: any) => {
@@ -18,6 +22,10 @@ export const  addNewRoll = (payload: any) => {
 
 export const  updateRolls = (payload: any) => {
   return { type: UPDATE_ROLLS, payload };
+}
+
+export const  resetRolls = () => {
+  return { type: RESET_ROLLS };
 }
 
 export function rollReducer(state: any, action: any) {
@@ -37,6 +45,12 @@ export function rollReducer(state: any, action: any) {
           return roll.student_id === id ? {...roll, roll_state: updatedState} : roll
         })
       };
+    case RESET_ROLLS: 
+      let resetRolls: StudentRoll[] = []
+      return {
+        ...state,
+        currentRolls: resetRolls
+      }
     default:
       return state;
   }
