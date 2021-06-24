@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 import Button from "@material-ui/core/ButtonBase"
-import {
-  CaretUpOutlined,
-  CaretDownOutlined,
-} from '@ant-design/icons';
+import { CaretUpOutlined, CaretDownOutlined } from "@ant-design/icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import { Colors } from "shared/styles/colors"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
 import { Person } from "shared/models/person"
+import { RollInput } from "shared/models/roll"
 import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
+import { buildActivities } from "../../api/get-activities"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
-import { useRollContext } from "../contexts/roll-context";
-import { useStudentContext, updateStudentSearch, updateFilterRollState, updateDisplayedStudents, updateSortBy, updateSortDirection } from "../contexts/student-context";
-import 'antd/dist/antd.css'
+import { useRollContext, resetRolls } from "../contexts/roll-context"
+import { useStudentContext, updateStudentSearch, updateFilterRollState, updateDisplayedStudents, updateSortBy, updateSortDirection } from "../contexts/student-context"
+import "antd/dist/antd.css"
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
+  // eslint-disable-next-line
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
+  const [saveRoll] = useApi({ url: "save-roll" })
   let { studentDetails, dispatch } = useStudentContext()
   let { rollDetails } = useRollContext()
+  let rollDispatch = useRollContext().dispatch
 
   useEffect(() => {
     void getStudents()
@@ -36,10 +38,22 @@ export const HomeBoardPage: React.FC = () => {
   const onActiveRollAction = async (action: ActiveRollAction) => {
     if (action === "exit") {
       setIsRollMode(false)
-      await dispatch(updateFilterRollState('all'))
-      dispatch(updateDisplayedStudents({
-        rolls: rollDetails.currentRolls
-      }))
+      await dispatch(updateFilterRollState("all"))
+      dispatch(
+        updateDisplayedStudents({
+          rolls: rollDetails.currentRolls,
+        })
+      )
+    } else if (action === "complete") {
+      setIsRollMode(false)
+      if (rollDetails.currentRolls && rollDetails.currentRolls.length > 0) {
+        let newRollInput: RollInput = {
+          student_roll_states: rollDetails.currentRolls,
+        }
+        await saveRoll(newRollInput)
+        buildActivities()
+        rollDispatch(resetRolls())
+      }
     }
   }
 
@@ -84,19 +98,21 @@ const Toolbar: React.FC<ToolbarProps> = (props) => {
 
   const onSearchStudents = async (event: any) => {
     await dispatch(updateStudentSearch(event.target.value))
-    dispatch(updateDisplayedStudents({
-      rolls: rollDetails.currentRolls
-    }))
+    dispatch(
+      updateDisplayedStudents({
+        rolls: rollDetails.currentRolls,
+      })
+    )
   }
 
   const getNextSortDirection = () => {
     switch (studentDetails.sortDirection) {
       case "ascending":
-        return "descending";
+        return "descending"
       case "descending":
-        return "none";
+        return "none"
       case "none":
-        return "ascending";
+        return "ascending"
       default:
         return "none"
     }
@@ -104,16 +120,20 @@ const Toolbar: React.FC<ToolbarProps> = (props) => {
 
   const onSortByChange = async (event: any) => {
     await dispatch(updateSortBy(event.target.value))
-    dispatch(updateDisplayedStudents({
-      rolls: rollDetails.currentRolls
-    }))
+    dispatch(
+      updateDisplayedStudents({
+        rolls: rollDetails.currentRolls,
+      })
+    )
   }
 
   const onSortClick = async () => {
     await dispatch(updateSortDirection(getNextSortDirection()))
-    dispatch(updateDisplayedStudents({
-      rolls: rollDetails.currentRolls
-    }))
+    dispatch(
+      updateDisplayedStudents({
+        rolls: rollDetails.currentRolls,
+      })
+    )
   }
 
   return (
@@ -136,78 +156,86 @@ const Toolbar: React.FC<ToolbarProps> = (props) => {
 
 const S = {
   PageContainer: styled.div`
-          display: flex;
-          flex-direction: column;
-          width: 50%;
-          margin: ${Spacing.u4} auto 140px;
-          `,
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    margin: ${Spacing.u4} auto 140px;
+  `,
   ToolbarContainer: styled.div`
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          color: #fff;
-          background-color: ${Colors.blue.base};
-          padding: 6px 14px;
-          font-weight: ${FontWeight.strong};
-          border-radius: ${BorderRadius.default};
-          `,
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    background-color: ${Colors.blue.base};
+    padding: 6px 14px;
+    font-weight: ${FontWeight.strong};
+    border-radius: ${BorderRadius.default};
+  `,
   Button: styled(Button)`
-          && {
-            padding: ${Spacing.u2};
-          font-weight: ${FontWeight.strong};
-          border-radius: ${BorderRadius.default};
+    && {
+      padding: ${Spacing.u2};
+      font-weight: ${FontWeight.strong};
+      border-radius: ${BorderRadius.default};
     }
-          `,
+  `,
   Input: styled.input`
-          && {
-            height: 50%;
-          background-color: ${Colors.blue.base};
-          color: #fff;
-          font-weight: ${FontWeight.normal};
-  }
-          ::placeholder {
-            color: #fff;
-          font-weight: ${FontWeight.normal};
-  }
-          `,
+    && {
+      height: 50%;
+      background-color: ${Colors.blue.base};
+      color: #fff;
+      font-weight: ${FontWeight.normal};
+      border-radius: 5px;
+      width: 50%;
+      border-color: grey;
+    }
+    ::placeholder {
+      color: #fff;
+      font-weight: ${FontWeight.mediumStrong};
+      text-align: center;
+      opacity: 1;
+    }
+    :focus {
+      border-color: darkgray;
+    }
+  `,
   Select: styled.select`
-          && {
-            height: 50%;
-          background-color: ${Colors.blue.base};
-          color: #fff;
-          font-weight: ${FontWeight.strong};
-  }
-          `,
+    && {
+      height: 50%;
+      background-color: ${Colors.blue.base};
+      color: #fff;
+      font-weight: ${FontWeight.strong};
+    }
+  `,
   Option: styled.option`
-  && {
-          color: #fff;
-          font-weight: ${FontWeight.mediumStrong};
-  }
-          :hover {
-            background-color: red;
-  }
-          `,
+    && {
+      color: #fff;
+      font-weight: ${FontWeight.mediumStrong};
+    }
+    :hover {
+      background-color: red;
+    }
+  `,
   SortDiv: styled.div`
-          && {
-                  display: flex;
-                  flex-direction: column;
-                  margin-left: 5px;
-          }
-            `,
+    && {
+      display: flex;
+      flex-direction: column;
+      margin-left: 5px;
+    }
+  `,
   SelectAndSort: styled.div`
-  && {
-          display: flex;
-          flex-direction: row;
-  }
-    `,
-  SortUp: styled(CaretUpOutlined) <{ sortdirection: string }>`
-  && {
-    color:  ${({ sortdirection }) => (sortdirection === 'ascending' ? Colors.white : Colors.grey)};     
-  }
-    `,
-  SortDown: styled(CaretDownOutlined) <{ sortdirection: string }>`
- && {
-  color:  ${({ sortdirection }) => (sortdirection === 'descending' ? Colors.white : Colors.grey)};      
- }
+    && {
+      display: flex;
+      flex-direction: row;
+    }
+  `,
+  SortUp: styled(CaretUpOutlined)<{ sortdirection: string }>`
+    && {
+      color: ${({ sortdirection }) => (sortdirection === "ascending" ? Colors.white : Colors.grey)};
+    }
+  `,
+  SortDown: styled(CaretDownOutlined)<{ sortdirection: string }>`
+    && {
+      color: ${({ sortdirection }) => (sortdirection === "descending" ? Colors.white : Colors.grey)};
+    }
   `,
 }

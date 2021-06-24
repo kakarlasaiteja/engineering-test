@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.component"
 import { Spacing, FontWeight } from "shared/styles/styles"
 import { RolllStateType } from "shared/models/roll"
-import { useStudentContext, updateDisplayedStudents, updateFilterRollState } from "../../contexts/student-context";
-import { useRollContext } from "../../contexts/roll-context";
+import { useStudentContext, updateDisplayedStudents, updateFilterRollState } from "../../contexts/student-context"
+import { useRollContext } from "../../contexts/roll-context"
 
 interface Props {
   stateList: StateList[]
@@ -17,9 +17,11 @@ export const RollStateList: React.FC<Props> = ({ stateList, size = 14, onItemCli
   let { rollDetails } = useRollContext()
   const onClick = async (type: ItemType) => {
     await dispatch(updateFilterRollState(type))
-    dispatch(updateDisplayedStudents({
-      rolls: rollDetails.currentRolls
-    }))
+    dispatch(
+      updateDisplayedStudents({
+        rolls: rollDetails.currentRolls,
+      })
+    )
   }
 
   return (
